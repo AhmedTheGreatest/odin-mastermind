@@ -106,6 +106,16 @@ module Mastermind
 
     private
 
+    # This method returns a valid color
+    def valid_color
+      color = COLORS.sample
+      loop do
+        color = COLORS.sample
+        break if validate_color(color)
+      end
+      color
+    end
+
     # This function returns true if a color is valid else false
     def validate_color(color)
       COLORS.include?(color) && !@guess.include?(color)
@@ -144,16 +154,59 @@ module Mastermind
   # This class represents the CodeBreaker AI
   class CodeBreakerAI < CodeBreaker
     # This method generates a guess for the AI
-    def make_guess
+    def make_guess(guess_info = nil)
       puts "#{@name}, Its Guess # #{13 - @attempts}!"
       puts 'The AI chose: '
-      @guess = []
       # Loops until the guess is valid
+      generate_guess(guess_info)
+      p @guess
+      @guess
+    end
+
+    # Provides exact feedback about the guess
+    def provide_exact_ai_feedback(secret_code)
+      [correctly_placed_colors(secret_code), correct_colors(secret_code)]
+    end
+
+    private
+
+    # Generates a guess
+    def generate_guess(guess_info)
+      # If there is no guess info then get a random guess else a calculated guess
+      if guess_info.nil?
+        random_guess
+      else
+        calculated_guess(guess_info)
+      end
+    end
+
+    # Returns a calculated guess based on the guess info argument
+    def calculated_guess(guess_info)
+      @guess.each_with_index do |color, index|
+        @guess[index] = if guess_info[0][index] == color
+                          color
+                        else
+                          valid_color
+                        end
+      end
+    end
+
+    # Gets a random guess
+    def random_guess
       loop do
         @guess = [COLORS.sample, COLORS.sample, COLORS.sample, COLORS.sample]
         break if @guess.length == @guess.uniq.length
       end
-      @guess
+    end
+
+    # This methods returns the count of correctly placed colors
+    def correctly_placed_colors(secret_code)
+      secret_code.map.with_index { |color, index| color if @guess[index] == color }
+    end
+
+    # This method returns the count of correct colors but in wrong order
+    def correct_colors(secret_code)
+      @guess.filter { |color| secret_code.include?(color) }
     end
   end
 
@@ -187,10 +240,17 @@ module Mastermind
       @secret_code = @code_maker.generate_secret_code
       # Displays a game start message
       puts 'A SECRET CODE HAS BEEN CHOSEN! GUESS IT! or DIE!'
+      play_game
+    end
+
+    private
+
+    # Plays the game
+    def play_game
       # Loops until the game is over
       loop do
-        # Asks the CodeBreaker to make a guess
-        @guess = @code_breaker.make_guess
+        # Gets a guess from the player
+        fetch_guess
         # Get the feedback on how close the guess was
         black_pegs, white_pegs = @code_maker.provide_feedback(@secret_code, @guess)
         # Displays the game i.e the pegs
@@ -204,7 +264,14 @@ module Mastermind
       end
     end
 
-    private
+    # Get a guess
+    def fetch_guess
+      @guess = if @guess.nil?
+                 @code_breaker.make_guess
+               else
+                 @code_breaker.make_guess(@code_breaker.provide_exact_ai_feedback(@secret_code))
+               end
+    end
 
     # This method generates the players depending on what the player input was
     def generate_players(input)
@@ -212,8 +279,8 @@ module Mastermind
         @code_maker = CodeMakerHuman.new('Player (CodeMaker)')
         @code_breaker = CodeBreakerAI.new('AI (CodeBreaker)')
       elsif input == 2
-        @code_maker = CodeMakerAI.new('Player (CodeMaker)')
-        @code_breaker = CodeBreakerAI.new('Player (CodeBreaker)')
+        @code_maker = CodeMakerAI.new('AI (CodeMaker)')
+        @code_breaker = CodeBreakerHuman.new('Player (CodeBreaker)')
       end
     end
 
