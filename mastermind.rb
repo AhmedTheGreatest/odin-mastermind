@@ -2,7 +2,9 @@
 
 # Mastermind game
 module Mastermind
+  # All the valid colors in this game
   COLORS = %w[RED GREEN BLUE YELLOW PURPLE PINK].freeze
+
   # This class represents the basic player
   class Player
     attr_reader :name
@@ -21,7 +23,9 @@ module Mastermind
       @secret_code = nil
     end
 
+    # This method generates a random secret code
     def generate_secret_code
+      # Loops until the secret code is valid
       loop do
         @secret_code = [COLORS.sample, COLORS.sample, COLORS.sample, COLORS.sample]
         break if @secret_code.length == @secret_code.uniq.length
@@ -29,6 +33,7 @@ module Mastermind
       @secret_code
     end
 
+    # Provides feedback about the guess in the form of black and white pegs
     def provide_feedback(secret_code, guess)
       black_pegs = count_correctly_placed(secret_code, guess)
       white_pegs = count_correct_colors(secret_code, guess) - black_pegs
@@ -38,10 +43,12 @@ module Mastermind
 
     private
 
+    # This methods returns the count of correctly placed colors
     def count_correctly_placed(secret_code, guess)
       secret_code.each_with_index.count { |color, index| guess[index] == color }
     end
 
+    # This method returns the count of correct colors but in wrong order
     def count_correct_colors(secret_code, guess)
       secret_code.count { |color| guess.include?(color) }
     end
@@ -53,9 +60,10 @@ module Mastermind
 
     def initialize(name)
       super(name)
-      @attempts = 12
+      @attempts = 12 # Sets the default attempts to 12
     end
 
+    # This method gets a guess from the user
     def make_guess
       puts "#{@name}, Its Guess # #{13 - @attempts}!"
       puts 'Enter your guess colors one by one: Available Colors are RED, GREEN, YELLOW, BLUE, PURPLE, PINK'
@@ -66,12 +74,14 @@ module Mastermind
       @guess
     end
 
+    # This method decrements the attempts by 1
     def decrement_attempts
       @attempts -= 1
     end
 
     private
 
+    # This method adds a valid color to the guess array
     def add_valid_color
       loop do
         color = gets.chomp.upcase
@@ -84,6 +94,7 @@ module Mastermind
       end
     end
 
+    # This function returns true if a color is valid else false
     def validate_color(color)
       COLORS.include?(color) && !@guess.include?(color)
     end
@@ -92,32 +103,46 @@ module Mastermind
   # This class will control the flow of the game
   class Game
     def initialize
-      @code_maker = CodeMaker.new('Player 1 CodeMaker')
-      @code_breaker = CodeBreaker.new('Player 2 CodeBreaker')
+      # Initializes 2 players, 1 CodeMaker, and 1 CodeBreaker
+      @code_breaker = CodeBreaker.new('Player 1 CodeBreaker')
+      @code_maker = CodeMaker.new('Player 2 CodeMaker')
     end
 
+    # Starts the game loop
     def start_game
+      # Generates a secret code
       @secret_code = @code_maker.generate_secret_code
+      # Displays a game start message
       puts 'A SECRET CODE HAS BEEN CHOSEN! GUESS IT! or DIE!'
+      # Loops until the game is over
       loop do
+        # Asks the CodeBreaker to make a guess
         @guess = @code_breaker.make_guess
+        # Get the feedback on how close the guess was
         black_pegs, white_pegs = @code_maker.provide_feedback(@secret_code, @guess)
+        # Displays the game i.e the pegs
         display_game(black_pegs, white_pegs)
+        # Decrement the attempts
         @code_breaker.decrement_attempts
+        # Prints a winner message if the player has won or lost
         print_winner_message
+        # Breaks if the game has ended
         break if check_lose_condition || check_win_condition
       end
     end
 
+    # This method displays the pegs
     def display_game(black_pegs, white_pegs)
       puts '+' * black_pegs + '-' * white_pegs
     end
 
+    # This method prints the game end / winner message
     def print_winner_message
       puts "#{@code_breaker.name} has WON the game in #{12 - @code_breaker.attempts} attempt(s)" if check_win_condition
       puts "#{@code_breaker.name} has run out of attempts" if check_lose_condition
     end
 
+    #  This method checks if the game has been won
     def check_win_condition
       black_pegs, _white_pegs = @code_maker.provide_feedback(@secret_code, @guess)
       return unless black_pegs == 4
@@ -125,11 +150,13 @@ module Mastermind
       true
     end
 
+    # This method checks if a game has been lost
     def check_lose_condition
       @code_breaker.attempts <= 0
     end
   end
 end
 
+# Creates a new game and starts playing it
 game = Mastermind::Game.new
 game.start_game
