@@ -143,7 +143,7 @@ module Mastermind
 
   # This class represents the CodeBreaker AI
   class CodeBreakerAI < CodeBreaker
-    # This method gets a guess from the user
+    # This method generates a guess for the AI
     def make_guess
       puts "#{@name}, Its Guess # #{13 - @attempts}!"
       puts 'The AI chose: '
@@ -165,6 +165,7 @@ module Mastermind
       @code_maker = code_maker
     end
 
+    # Setups the game and asks the user if they want to be the CodeMaker or CodeBreaker
     def setup_game
       puts 'Do you want to be:'
       puts '1) CodeMaker'
@@ -205,6 +206,7 @@ module Mastermind
 
     private
 
+    # This method generates the players depending on what the player input was
     def generate_players(input)
       if input == 1
         @code_maker = CodeMakerHuman.new('Player (CodeMaker)')
