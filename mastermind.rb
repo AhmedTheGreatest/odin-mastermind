@@ -23,16 +23,6 @@ module Mastermind
       @secret_code = nil
     end
 
-    # This method generates a random secret code
-    def generate_secret_code
-      # Loops until the secret code is valid
-      loop do
-        @secret_code = [COLORS.sample, COLORS.sample, COLORS.sample, COLORS.sample]
-        break if @secret_code.length == @secret_code.uniq.length
-      end
-      @secret_code
-    end
-
     # Provides feedback about the guess in the form of black and white pegs
     def provide_feedback(secret_code, guess)
       black_pegs = count_correctly_placed(secret_code, guess)
@@ -54,6 +44,52 @@ module Mastermind
     end
   end
 
+  # This class represents the CodeMakerAI
+  class CodeMakerAI < CodeMaker
+    # This method generates a random secret code
+    def generate_secret_code
+      # Loops until the secret code is valid
+      loop do
+        @secret_code = [COLORS.sample, COLORS.sample, COLORS.sample, COLORS.sample]
+        break if @secret_code.length == @secret_code.uniq.length
+      end
+      @secret_code
+    end
+  end
+
+  # This class represents the Human Player
+  class CodeMakerHuman < CodeMaker
+    # This method gets a secret code from the user
+    def generate_secret_code
+      puts 'Enter a secret code (enter colors one by one): Available Colors are RED, GREEN, YELLOW, BLUE, PURPLE, PINK'
+      @secret_code = []
+      4.times do
+        add_valid_color
+      end
+      @secret_code
+    end
+
+    private
+
+    # This method adds a valid color to the secret_code array
+    def add_valid_color
+      loop do
+        color = gets.chomp.upcase
+        valid = validate_color(color)
+        if valid
+          @secret_code << color
+          break
+        end
+        puts 'Invalid or already used color, please try again'
+      end
+    end
+
+    # This function returns true if a color is valid else false
+    def validate_color(color)
+      COLORS.include?(color) && !@secret_code.include?(color)
+    end
+  end
+
   # This class is for the CodeBreaker player
   class CodeBreaker < Player
     attr_reader :attempts
@@ -63,6 +99,21 @@ module Mastermind
       @attempts = 12 # Sets the default attempts to 12
     end
 
+    # This method decrements the attempts by 1
+    def decrement_attempts
+      @attempts -= 1
+    end
+
+    private
+
+    # This function returns true if a color is valid else false
+    def validate_color(color)
+      COLORS.include?(color) && !@guess.include?(color)
+    end
+  end
+
+  # This class represents the CodeBreaker Human
+  class CodeBreakerHuman < CodeBreaker
     # This method gets a guess from the user
     def make_guess
       puts "#{@name}, Its Guess # #{13 - @attempts}!"
@@ -72,11 +123,6 @@ module Mastermind
         add_valid_color
       end
       @guess
-    end
-
-    # This method decrements the attempts by 1
-    def decrement_attempts
-      @attempts -= 1
     end
 
     private
@@ -93,19 +139,45 @@ module Mastermind
         puts 'Invalid or already used color, please try again'
       end
     end
+  end
 
-    # This function returns true if a color is valid else false
-    def validate_color(color)
-      COLORS.include?(color) && !@guess.include?(color)
+  # This class represents the CodeBreaker AI
+  class CodeBreakerAI < CodeBreaker
+    # This method gets a guess from the user
+    def make_guess
+      puts "#{@name}, Its Guess # #{13 - @attempts}!"
+      puts 'The AI chose: '
+      @guess = []
+      # Loops until the guess is valid
+      loop do
+        @guess = [COLORS.sample, COLORS.sample, COLORS.sample, COLORS.sample]
+        break if @guess.length == @guess.uniq.length
+      end
+      @guess
     end
   end
 
   # This class will control the flow of the game
   class Game
-    def initialize
+    def initialize(code_breaker = nil, code_maker = nil)
       # Initializes 2 players, 1 CodeMaker, and 1 CodeBreaker
-      @code_breaker = CodeBreaker.new('Player 1 CodeBreaker')
-      @code_maker = CodeMaker.new('Player 2 CodeMaker')
+      @code_breaker = code_breaker
+      @code_maker = code_maker
+    end
+
+    def setup_game
+      puts 'Do you want to be:'
+      puts '1) CodeMaker'
+      puts '2) CodeBreaker'
+      puts 'Enter the corresponding number'
+
+      input = 0
+      loop do
+        input = gets.chomp.to_i
+        break if input >= 1 && input <= 3
+      end
+
+      generate_players(input)
     end
 
     # Starts the game loop
@@ -128,6 +200,18 @@ module Mastermind
         print_winner_message
         # Breaks if the game has ended
         break if check_lose_condition || check_win_condition
+      end
+    end
+
+    private
+
+    def generate_players(input)
+      if input == 1
+        @code_maker = CodeMakerHuman.new('Player (CodeMaker)')
+        @code_breaker = CodeBreakerAI.new('AI (CodeBreaker)')
+      elsif input == 2
+        @code_maker = CodeMakerAI.new('Player (CodeMaker)')
+        @code_breaker = CodeBreakerAI.new('Player (CodeBreaker)')
       end
     end
 
@@ -159,4 +243,5 @@ end
 
 # Creates a new game and starts playing it
 game = Mastermind::Game.new
+game.setup_game
 game.start_game
