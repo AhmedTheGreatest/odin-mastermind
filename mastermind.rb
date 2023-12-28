@@ -57,7 +57,8 @@ module Mastermind
     end
 
     def make_guess
-      puts "#{@name}, enter your guess colors one by one: "
+      puts "#{@name}, Its Guess # #{13 - @attempts}!"
+      puts 'Enter your guess colors one by one: Available Colors are RED, GREEN, YELLOW, BLUE, PURPLE, PINK'
       @guess = []
       4.times do
         add_valid_color
@@ -114,7 +115,7 @@ module Mastermind
 
     def print_winner_message
       puts "#{@code_breaker.name} has WON the game in #{12 - @code_breaker.attempts} attempt(s)" if check_win_condition
-      puts "#{@code_breaker.name} has WON the game in #{12 - @code_breaker.attempts} attempt(s)" if check_lose_condition
+      puts "#{@code_breaker.name} has run out of attempts" if check_lose_condition
     end
 
     def check_win_condition
